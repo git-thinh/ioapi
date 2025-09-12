@@ -3,9 +3,12 @@ import path from 'node:path'
 import { default as axios } from 'axios'
 
 //import { LowSync, MemorySync } from 'lowdb'
-//import { JSONFilePreset } from 'lowdb/node'
 import { LowSync } from 'lowdb'
 import { JSONFileSync } from 'lowdb/node'
+
+const MAX_LENGTH = 4000
+const MAX_ITEMS = 1000
+const MAX_FIELD = 20
 
 export const CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -58,17 +61,26 @@ function getParams(event) {
 
 ////////////////////////////////////////////////////
 
+async function loadDB(db) {
+    db.read()
+    //await db.read()
+}
+
+async function writeDB(db) {
+    db.write()
+    //await db.write()
+}
+
 export async function initDB(event) {
     const isDev = event.rawUrl.indexOf('//localhost') > 0
     const root = isDev ? './tmp' : '/tmp'
     if (!fs.existsSync(root)) fs.mkdirSync(root)
+    const file = `${root}/db.json`
 
     //const db = new LowSync(new MemorySync(), { items: [{ _id: '1', title: 'item 1' }] })
-    //const db = await JSONFilePreset(`${root}/db.json`, { items: [{ _id: '1', title: 'item 1' }] })
-
-    const db = new LowSync(new JSONFileSync(`${root}/db.json`), { items: [{ _id: 1, title: 'item 1' }] })
-    //db.read()
-    //db.write()
+    const db = new LowSync(new JSONFileSync(file), { items: [{ _id: 1, title: 'item 1' }] })
+    if (fs.existsSync(file)) await loadDB()
+    //await writeDB(db)
 
     return db
 }
@@ -89,18 +101,59 @@ export async function postRequest(db, event) {
     return r
 }
 
-export async function getItemById(db, event) {
-    const r = { ok: true }
-    return r
-}
-
 export async function putItemAddnew(db, event) {
-    const r = { ok: true }
+    const r = { ok: true, data: null }
+    const { collection, id } = getParams(event)
+    if (collection) {
+        let a = []
+
+        if (!db.data[collection]) {
+            db.data[collection] = []
+            await writeDB(db)
+        }
+        else a = db.data[collection] || []
+
+        if (a.length > MAX_ITEMS)
+            return { ok: false, error: `MAX_ITEMS > ${MAX_ITEMS}` }
+
+        const it = JSON.parse(event.body || '{}');
+        it._id = String(a.length + 1)
+
+        if (Object.keys(it).length > MAX_FIELD)
+            return { ok: false, error: `MAX_FIELD > ${MAX_FIELD}` }
+        if (JSON.stringify(it).length > MAX_LENGTH)
+            return { ok: false, error: `MAX_LENGTH > ${MAX_LENGTH}` }
+
+        await db.update((x) => x[collection].push(it))
+    }
     return r
 }
 
 export async function postItemEdit(db, event) {
-    const r = { ok: true }
+    const r = { ok: true, data: null }
+    const { collection, id } = getParams(event)
+    if (collection) {
+        let a = []
+
+        if (!db.data[collection]) {
+            db.data[collection] = []
+            await writeDB(db)
+        }
+        else a = db.data[collection] || []
+
+        if (a.length > MAX_ITEMS)
+            return { ok: false, error: `MAX_ITEMS > ${MAX_ITEMS}` }
+
+        const it = req.body || {}
+        it._id = String(a.length + 1)
+
+        if (Object.keys(it).length > MAX_FIELD)
+            return { ok: false, error: `MAX_FIELD > ${MAX_FIELD}` }
+        if (JSON.stringify(it).length > MAX_LENGTH)
+            return { ok: false, error: `MAX_LENGTH > ${MAX_LENGTH}` }
+
+        await db.update((x) => x[collection].push(it))
+    }
     return r
 }
 
