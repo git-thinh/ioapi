@@ -5,3 +5,5 @@ netlify/node_modules/*
 .netlify
 
 netlify/tmp/
+node/node_modules/*
+node/yarn.lock

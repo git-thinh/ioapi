@@ -81,7 +81,7 @@ export async function initDB(event) {
 
     if (!global.db) {
         //global.db = new LowSync(new MemorySync(), { items: [{ _id: 1, title: 'item 1' }] })
-        global.db = new LowSync(new JSONFileSync(file), { items: [{ _id: 1, title: 'item 1' }] })
+        global.db = new LowSync(new JSONFileSync(file), { items: [{ _id: 1, title: 'item 1', price: 69 }] })
         await loadDB(global.db)
         console.log(`\n[ DB_INIT ]\n`)
     }
