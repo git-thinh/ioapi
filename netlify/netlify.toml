@@ -9,8 +9,14 @@
   method = "PUT"
 
 [[redirects]]
-  from = "/io/post/*"
-  to = "/.netlify/functions/post_request"
+  from = "/io/post-edit/*"
+  to = "/.netlify/functions/post_edit"
+  status = 200
+  method = "POST"
+
+[[redirects]]
+  from = "/io/post-search/*"
+  to = "/.netlify/functions/post_search"
   status = 200
   method = "POST"
 

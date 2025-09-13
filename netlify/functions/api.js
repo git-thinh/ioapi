@@ -1,14 +1,18 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { default as axios } from 'axios'
 
-//import { LowSync, MemorySync } from 'lowdb'
-import { LowSync } from 'lowdb'
+import { default as axios } from 'axios'
+import _ from 'lodash'
+
+import { LowSync, MemorySync } from 'lowdb'
 import { JSONFileSync } from 'lowdb/node'
+
+////////////////////////////////////////////////////
 
 const MAX_LENGTH = 4000
 const MAX_ITEMS = 1000
 const MAX_FIELD = 20
+global.db = null
 
 export const CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -62,13 +66,11 @@ function getParams(event) {
 ////////////////////////////////////////////////////
 
 async function loadDB(db) {
-    db.read()
-    //await db.read()
+    await db.read()
 }
 
 async function writeDB(db) {
-    db.write()
-    //await db.write()
+    await db.write()
 }
 
 export async function initDB(event) {
@@ -77,13 +79,18 @@ export async function initDB(event) {
     if (!fs.existsSync(root)) fs.mkdirSync(root)
     const file = `${root}/db.json`
 
-    //const db = new LowSync(new MemorySync(), { items: [{ _id: '1', title: 'item 1' }] })
-    const db = new LowSync(new JSONFileSync(file), { items: [{ _id: 1, title: 'item 1' }] })
-    if (fs.existsSync(file)) await loadDB()
-    //await writeDB(db)
+    if (!global.db) {
+        //global.db = new LowSync(new MemorySync(), { items: [{ _id: 1, title: 'item 1' }] })
+        global.db = new LowSync(new JSONFileSync(file), { items: [{ _id: 1, title: 'item 1' }] })
+        await loadDB(global.db)
+        console.log(`\n[ DB_INIT ]\n`)
+    }
 
-    return db
+    //await writeDB(db)
+    return global.db
 }
+
+////////////////////////////////////////////////////
 
 export async function getRequest(db, event) {
     const r = { ok: true, data: null }
@@ -96,20 +103,38 @@ export async function getRequest(db, event) {
     return r
 }
 
-export async function postRequest(db, event) {
-    const r = { ok: true }
+export async function postSearch(db, event) {
+    const r = { ok: true, data: [] }
+    const s = event.body || ''
+    //r.condition = s
+
+    const { collection } = getParams(event)
+    if (collection) {
+        let a = []
+        if (!db.data[collection]) db.data[collection] = []
+        else a = db.data[collection] || []
+
+        try {
+            const fc = new Function('it', s)
+            a = _.filter(a, fc)
+            r.data = a
+        } catch (e) { 
+            return { ok: false, error: `ERROR_SEARCH: ${e.message}` }
+        }
+    }
+
     return r
 }
 
 export async function putItemAddnew(db, event) {
     const r = { ok: true, data: null }
-    const { collection, id } = getParams(event)
+    const { collection } = getParams(event)
     if (collection) {
-        let a = []
+        let a = [], id = 0
 
         if (!db.data[collection]) {
             db.data[collection] = []
-            await writeDB(db)
+            //await writeDB(db)
         }
         else a = db.data[collection] || []
 
@@ -117,47 +142,59 @@ export async function putItemAddnew(db, event) {
             return { ok: false, error: `MAX_ITEMS > ${MAX_ITEMS}` }
 
         const it = JSON.parse(event.body || '{}');
-        it._id = String(a.length + 1)
 
         if (Object.keys(it).length > MAX_FIELD)
             return { ok: false, error: `MAX_FIELD > ${MAX_FIELD}` }
         if (JSON.stringify(it).length > MAX_LENGTH)
             return { ok: false, error: `MAX_LENGTH > ${MAX_LENGTH}` }
 
+        const mx = _.maxBy(a, '_id');
+        if (mx) { id = mx._id + 1 } else id = 1
+        it._id = id
+
         await db.update((x) => x[collection].push(it))
+        r.data = it
     }
     return r
 }
 
 export async function postItemEdit(db, event) {
-    const r = { ok: true, data: null }
     const { collection, id } = getParams(event)
-    if (collection) {
-        let a = []
+    if (collection && id > 0) {
+        const it = JSON.parse(event.body || '{}');
+        const keys = Object.keys(it).filter((x) => x !== '_id')
 
-        if (!db.data[collection]) {
-            db.data[collection] = []
-            await writeDB(db)
-        }
-        else a = db.data[collection] || []
-
-        if (a.length > MAX_ITEMS)
-            return { ok: false, error: `MAX_ITEMS > ${MAX_ITEMS}` }
-
-        const it = req.body || {}
-        it._id = String(a.length + 1)
-
-        if (Object.keys(it).length > MAX_FIELD)
+        if (keys.length > MAX_FIELD)
             return { ok: false, error: `MAX_FIELD > ${MAX_FIELD}` }
         if (JSON.stringify(it).length > MAX_LENGTH)
             return { ok: false, error: `MAX_LENGTH > ${MAX_LENGTH}` }
 
-        await db.update((x) => x[collection].push(it))
+        const a = db.data[collection] || []
+        const size = a.length
+        if (size > 0 && keys.length > 0) {
+            let ix = a.findIndex((x) => x._id === id)
+            if (ix != -1) {
+                keys.forEach((name) => a[ix][name] = it[name])
+                await writeDB(db)
+                return { ok: true, data: a[ix] }
+            }
+        }
     }
-    return r
+    return { ok: false }
 }
 
 export async function deleteItemById(db, event) {
-    const r = { ok: true }
-    return r
+    const { collection, id } = getParams(event)
+    if (collection && id > 0) {
+        let a = db.data[collection] || []
+        if (a.length > 0) {
+            let r = a.filter((x) => x._id !== id)
+            if (r.length !== a.length) {
+                db.data[collection] = r
+                await writeDB(db)
+            }
+        }
+        return { ok: true }
+    }
+    return { ok: false }
 }
