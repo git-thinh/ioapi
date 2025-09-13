@@ -5,8 +5,8 @@ export default async function (req, res) {
     const entry = await db.initDB(collection)
 
     let r = {};
-    if (id > 0) r = await db.getItemById(entry, collection)
-    else r = await db.getItems(entry, collection, id)
+    if (id > 0) r = await db.getItemById(entry, collection, id)
+    else r = await db.getItems(entry, collection)
 
     return res.send(r)
 }
