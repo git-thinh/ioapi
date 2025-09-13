@@ -1,4 +1,4 @@
-let HTTP_PORT = 6363
+let HTTP_PORT = 8100
 
 import express from 'express'
 import cors from 'cors'
