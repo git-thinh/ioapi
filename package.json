@@ -2,7 +2,8 @@
   "name": "io-api",
   "type": "module",
   "scripts": {
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "start": "node app.js"
   },
   "dependencies": {
     "axios": "^1.12.1",
