@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "_id": 1,
+      "title": "item 1",
+      "price": 69
+    }
+  ],
+  "taskers": [
+    {
+      "home": "",
+      "api": "",
+      "source": "",
+      "test": "",
+      "description": "",
+      "_id": 1
+    }
+  ]
+}

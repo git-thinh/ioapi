@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "_id": 1,
+      "title": "item 1",
+      "price": 69
+    }
+  ],
+  "projects": [
+    {
+      "name": "Bug tracking",
+      "client": "",
+      "color": "",
+      "status": "",
+      "health": "",
+      "projectManager": "",
+      "startDate": "",
+      "endDate": "",
+      "estimateWorkingDay": 0,
+      "estimateManDay": 0,
+      "hoursPerDay": 0,
+      "manualProgress": false,
+      "weightedProgress": false,
+      "timeBasedProgress": false,
+      "notes": "test",
+      "_id": 1
+    }
+  ]
+}

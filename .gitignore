@@ -7,3 +7,4 @@ netlify/node_modules/*
 netlify/tmp/
 node/node_modules/*
 node/yarn.lock
+node_modules/*

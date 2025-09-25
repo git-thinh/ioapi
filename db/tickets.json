@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "_id": 1,
+      "title": "item 1",
+      "price": 69
+    }
+  ],
+  "tickets": [
+    {
+      "projectId": "",
+      "name": "",
+      "status": "",
+      "taskKey": "",
+      "phase": "",
+      "assignee": "",
+      "startDate": "",
+      "endDate": "",
+      "hours": 0,
+      "minutes": 0,
+      "priority": "",
+      "notifyPerson": "",
+      "labels": "",
+      "billab": false,
+      "recurring": false,
+      "timeBasedProgress": false,
+      "description": "",
+      "_id": 1
+    }
+  ]
+}
